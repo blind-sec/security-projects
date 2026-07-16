@@ -2,6 +2,13 @@
 
 import json
 import sys
+
+# Force UTF-8 on Windows terminals that default to cp1252
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 from datetime import datetime
 
 from .scanner import Finding, ScanResult
@@ -27,10 +34,10 @@ SEVERITY_COLOR = {
 }
 
 SEVERITY_ICON = {
-    "CRITICAL": "●",
-    "HIGH":     "●",
-    "MEDIUM":   "◉",
-    "LOW":      "○",
+    "CRITICAL": "[!]",
+    "HIGH":     "[!]",
+    "MEDIUM":   "[~]",
+    "LOW":      "[-]",
 }
 
 
