@@ -23,6 +23,13 @@ BINARY_EXTENSIONS = {
     ".db", ".sqlite", ".sqlite3",
 }
 
+# File names to skip entirely (lockfiles contain hashes that trigger false positives)
+SKIP_FILENAMES = {
+    "package-lock.json", "yarn.lock", "composer.lock",
+    "Gemfile.lock", "poetry.lock", "Pipfile.lock",
+    "pnpm-lock.yaml", "bun.lockb",
+}
+
 MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB
 
 
@@ -85,6 +92,11 @@ def _should_skip_path(path: Path) -> bool:
     return False
 
 
+def _should_skip_file(path: Path) -> bool:
+    """Return True if this specific file should be skipped."""
+    return path.name in SKIP_FILENAMES
+
+
 def _is_binary(path: Path) -> bool:
     return path.suffix.lower() in BINARY_EXTENSIONS
 
@@ -134,6 +146,8 @@ def scan_file(path: Path, rules: list[Rule] | None = None) -> ScanResult:
     result = ScanResult()
     if _is_binary(path):
         return result
+    if _should_skip_file(path):
+        return result
     if path.stat().st_size > MAX_FILE_SIZE_BYTES:
         result.errors.append(f"Skipped (too large): {path}")
         return result
@@ -167,6 +181,8 @@ def scan_directory(root: Path, rules: list[Rule] | None = None) -> ScanResult:
         for filename in filenames:
             filepath = current / filename
             if _should_skip_path(filepath):
+                continue
+            if _should_skip_file(filepath):
                 continue
             file_result = scan_file(filepath, rules)
             combined.findings.extend(file_result.findings)
